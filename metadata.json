@@ -1,0 +1,7 @@
+{
+  "name": "Copy of OmniConvert",
+  "description": "A surgical, client-side media conversion and AI transcription system with zero server costs.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
