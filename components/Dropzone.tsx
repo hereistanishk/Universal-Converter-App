@@ -1,6 +1,5 @@
-
 import React, { useState, useRef } from 'react';
-import { Upload, FileCode, CheckCircle } from 'lucide-react';
+import { Upload, FileCode, HardDrive } from 'lucide-react';
 import { FileMetadata } from '../types';
 
 interface DropzoneProps {
@@ -37,11 +36,11 @@ export const Dropzone: React.FC<DropzoneProps> = ({ onFileSelect, disabled }) =>
       onDragLeave={() => setIsDragging(false)}
       onDrop={onDrop}
       className={`
-        relative w-full max-w-2xl mx-auto min-h-[320px] 
+        relative w-full max-w-2xl mx-auto min-h-[380px] 
         border-2 border-dashed rounded-[12px] 
-        flex flex-col items-center justify-center p-8 transition-all duration-300
-        ${isDragging ? 'border-indigo-600 bg-indigo-50/50 scale-[1.01]' : 'border-slate-200 bg-white'}
-        ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-indigo-400 hover:shadow-sm'}
+        flex flex-col items-center justify-center p-12 transition-all duration-300
+        ${isDragging ? 'border-indigo-500 bg-indigo-500/5 scale-[1.01]' : 'border-white/10 bg-white/[0.02]'}
+        ${disabled ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer hover:border-indigo-400 hover:bg-white/[0.04]'}
       `}
       onClick={() => !disabled && inputRef.current?.click()}
     >
@@ -52,23 +51,23 @@ export const Dropzone: React.FC<DropzoneProps> = ({ onFileSelect, disabled }) =>
         onChange={(e) => e.target.files && handleFile(e.target.files[0])}
       />
       
-      <div className={`p-4 rounded-full mb-6 ${isDragging ? 'bg-indigo-600 text-white' : 'bg-slate-50 text-slate-400'} transition-colors`}>
-        {isDragging ? <FileCode className="w-10 h-10" /> : <Upload className="w-10 h-10" />}
+      <div className={`p-6 rounded-2xl mb-8 ${isDragging ? 'bg-indigo-500 text-white shadow-xl shadow-indigo-500/20' : 'bg-slate-800 text-slate-400'} transition-all`}>
+        {isDragging ? <FileCode className="w-12 h-12" /> : <Upload className="w-12 h-12" />}
       </div>
 
-      <h3 className="text-xl font-semibold text-slate-900 mb-2">
-        {isDragging ? 'Release to Surgical Input' : 'Drop your file here'}
+      <h3 className="text-2xl font-bold text-white mb-3">
+        {isDragging ? 'Initiate Sequence' : 'Ingest Media Asset'}
       </h3>
-      <p className="text-slate-500 text-center max-w-xs">
-        Supports high-bitrate video, audio, and documents for client-side AI processing.
+      <p className="text-slate-400 text-center max-w-sm text-base leading-relaxed">
+        Drop high-bitrate video or audio for edge-isolated transformation. No data leaves your machine.
       </p>
 
-      <div className="absolute bottom-6 flex gap-4 text-xs font-medium text-slate-400 uppercase tracking-widest">
-        <span>MP4</span>
-        <span>MOV</span>
-        <span>MP3</span>
-        <span>WAV</span>
-        <span>SRT</span>
+      <div className="absolute bottom-8 flex flex-wrap justify-center gap-6 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">
+        <div className="flex items-center gap-1.5"><HardDrive className="w-3 h-3" /> MP4</div>
+        <div className="flex items-center gap-1.5"><HardDrive className="w-3 h-3" /> WEBM</div>
+        <div className="flex items-center gap-1.5"><HardDrive className="w-3 h-3" /> MP3</div>
+        <div className="flex items-center gap-1.5"><HardDrive className="w-3 h-3" /> WAV</div>
+        <div className="flex items-center gap-1.5"><HardDrive className="w-3 h-3" /> SRT</div>
       </div>
     </div>
   );

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { AppState, FileMetadata, ConversionSettings, ProcessingProgress } from './types';
 import { INITIAL_CREDITS, COST_CONVERSION, COST_TRANSCRIPTION } from './constants';
@@ -8,27 +7,23 @@ import { SelectionView } from './components/SelectionView';
 import { ProcessingView } from './components/ProcessingView';
 import { CompleteView } from './components/CompleteView';
 import { processMedia } from './services/mediaService';
-import { Layers, Zap } from 'lucide-react';
+import { Layers, Zap, Info, ShieldCheck } from 'lucide-react';
 
 const App: React.FC = () => {
-  // --- State Machine ---
   const [appState, setAppState] = useState<AppState>(AppState.IDLE);
   const [credits, setCredits] = useState<number>(() => {
     const saved = localStorage.getItem('omni_credits');
     return saved ? parseInt(saved, 10) : INITIAL_CREDITS;
   });
   
-  // --- Data Stores ---
   const [selectedFile, setSelectedFile] = useState<FileMetadata | null>(null);
   const [processingProgress, setProcessingProgress] = useState<ProcessingProgress>({ percentage: 0, step: '' });
   const [outputResult, setOutputResult] = useState<{ url: string; filename: string } | null>(null);
 
-  // Sync credits to localStorage
   useEffect(() => {
     localStorage.setItem('omni_credits', credits.toString());
   }, [credits]);
 
-  // Transitions
   const handleFileSelect = (file: FileMetadata) => {
     setSelectedFile(file);
     setAppState(AppState.SELECTION);
@@ -64,86 +59,113 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      {/* Header */}
-      <header className="sticky top-0 z-50 h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-indigo-600 rounded-[8px] flex items-center justify-center text-white shadow-sm">
+    <div className="min-h-screen bg-[#0f172a] text-slate-200 flex flex-col antialiased">
+      {/* Surgical Navigation */}
+      <header className="sticky top-0 z-50 h-16 bg-[#0f172a]/80 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-8">
+        <div className="flex items-center gap-4">
+          <div className="w-9 h-9 bg-indigo-500 rounded-[6px] flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
             <Layers className="w-5 h-5" />
           </div>
-          <span className="text-xl font-bold text-slate-900 tracking-tight">Omni<span className="text-indigo-600">Convert</span></span>
+          <div>
+            <span className="text-xl font-bold text-white tracking-tight">Omni<span className="text-indigo-400">Convert</span></span>
+            <div className="text-[10px] text-slate-500 font-medium tracking-[0.2em] uppercase leading-none mt-1">Surgical Media Engine</div>
+          </div>
         </div>
         
-        <div className="flex items-center gap-4">
-          <CreditBadge credits={credits} />
-          <div className="hidden md:flex items-center gap-2 text-slate-400 text-xs font-semibold uppercase tracking-widest pl-4 border-l border-slate-100">
-            <Zap className="w-3 h-3 text-indigo-500 fill-indigo-500" />
-            Zero Cloud Latency
+        <div className="flex items-center gap-6">
+          <div className="hidden lg:flex items-center gap-4 text-xs font-semibold uppercase tracking-widest text-slate-400">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Edge Isolated</span>
+            </div>
+            <div className="w-px h-4 bg-white/10" />
+            <div className="flex items-center gap-2">
+              <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400/20" />
+              <span>0ms Cloud Latency</span>
+            </div>
           </div>
+          <CreditBadge credits={credits} />
         </div>
       </header>
 
-      {/* Main Content Area */}
-      <main className="flex-1 flex flex-col items-center justify-center p-8">
-        <div className="w-full max-w-4xl">
+      {/* Main Orchestration Area */}
+      <main className="flex-1 flex flex-col items-center justify-center p-6 md:p-12">
+        <div className="w-full max-w-4xl space-y-8">
           {appState === AppState.IDLE && (
-            <div className="text-center mb-12 animate-fade-in">
-              <h1 className="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">
-                The Surgical Conversion System.
+            <div className="text-center mb-12 progressive-reveal">
+              <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-6 tracking-tight">
+                Client-Side Media <span className="text-indigo-400">Surgery.</span>
               </h1>
-              <p className="text-lg text-slate-500 max-w-2xl mx-auto">
-                Process high-fidelity media and AI transcriptions entirely in your browser. 
-                No servers, no tracking, pure performance.
+              <p className="text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
+                Transcode, extract, and transcribe high-fidelity assets without leaving your browser. 
+                Secured by local compute, optimized for efficiency.
               </p>
             </div>
           )}
 
-          {appState === AppState.IDLE && <Dropzone onFileSelect={handleFileSelect} />}
-          
-          {appState === AppState.SELECTION && selectedFile && (
-            <SelectionView 
-              file={selectedFile} 
-              onCancel={handleReset} 
-              onProcess={handleStartProcessing} 
-              credits={credits}
-            />
-          )}
+          <div className="relative">
+            {appState === AppState.IDLE && <Dropzone onFileSelect={handleFileSelect} />}
+            
+            {appState === AppState.SELECTION && selectedFile && (
+              <SelectionView 
+                file={selectedFile} 
+                onCancel={handleReset} 
+                onProcess={handleStartProcessing} 
+                credits={credits}
+              />
+            )}
 
-          {appState === AppState.PROCESSING && (
-            <ProcessingView progress={processingProgress} />
-          )}
+            {appState === AppState.PROCESSING && (
+              <ProcessingView progress={processingProgress} />
+            )}
 
-          {appState === AppState.COMPLETE && outputResult && (
-            <CompleteView 
-              downloadUrl={outputResult.url} 
-              filename={outputResult.filename} 
-              onReset={handleReset} 
-            />
-          )}
+            {appState === AppState.COMPLETE && outputResult && (
+              <CompleteView 
+                downloadUrl={outputResult.url} 
+                filename={outputResult.filename} 
+                onReset={handleReset} 
+              />
+            )}
 
-          {appState === AppState.ERROR && (
-            <div className="text-center p-12 bg-white rounded-[12px] border border-red-200">
-              <h3 className="text-xl font-bold text-red-600 mb-2">Process Interrupted</h3>
-              <p className="text-slate-500 mb-6">Something went wrong during the surgical extraction.</p>
-              <button onClick={handleReset} className="px-6 py-2 bg-slate-900 text-white rounded-[8px]">Try Again</button>
-            </div>
-          )}
+            {appState === AppState.ERROR && (
+              <div className="progressive-reveal text-center p-12 glass-panel rounded-[12px] border border-red-500/20">
+                <div className="inline-flex p-3 bg-red-500/10 text-red-500 rounded-full mb-6">
+                  <Info className="w-8 h-8" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">Extraction Interrupted</h3>
+                <p className="text-slate-400 mb-8 max-w-sm mx-auto">
+                  An unexpected error occurred during the local processing sequence. Ensure your browser supports WebAssembly.
+                </p>
+                <button 
+                  onClick={handleReset} 
+                  className="px-8 py-3 bg-white text-slate-900 rounded-[8px] font-bold hover:bg-slate-100 transition-all active:scale-95"
+                >
+                  Return to Hangar
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </main>
 
-      {/* Footer / Features */}
-      <footer className="h-16 border-t border-slate-200 flex items-center justify-center gap-12 text-xs font-medium text-slate-400 uppercase tracking-[0.2em] bg-white">
-        <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full" />
-            Client-Side Only
+      {/* Technical Footer */}
+      <footer className="h-14 border-t border-white/5 flex items-center justify-between px-8 text-[10px] font-medium text-slate-500 uppercase tracking-[0.2em] bg-[#0b1222]">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2">
+            <div className="w-1 h-1 bg-indigo-500 rounded-full animate-pulse" />
+            Core: WASM/FFmpeg
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-1 h-1 bg-indigo-500 rounded-full animate-pulse" />
+            AI: Transformers.js
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full" />
-            FFmpeg.wasm
+        <div className="hidden sm:block">
+          OmniConvert v1.4.2 // Surgical System Ready
         </div>
-        <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full" />
-            Transformers.js
+        <div className="flex items-center gap-2 text-indigo-400">
+          <Info className="w-3 h-3" />
+          Status: Operational
         </div>
       </footer>
     </div>

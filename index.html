@@ -1,26 +1,49 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OmniConvert | The Surgical System</title>
+    <meta name="description" content="Client-side media conversion and AI transcription system.">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --grid-unit: 8px;
+        }
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f8fafc; /* Slate-50 */
+            background-color: #0f172a; /* Slate-900 for a surgical dark mode feel */
+            color: #f8fafc;
             -webkit-font-smoothing: antialiased;
             line-height: 1.5;
+            margin: 0;
+            overflow-x: hidden;
         }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        
+        /* Surgical UI Accents */
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.2);
+        }
+
         .progressive-reveal {
-            animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(16px); }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(12px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
     </style>
 <script type="importmap">
 {
@@ -35,5 +58,6 @@
 </head>
 <body>
     <div id="root"></div>
+    <script type="module" src="./index.tsx"></script>
 </body>
 </html>
