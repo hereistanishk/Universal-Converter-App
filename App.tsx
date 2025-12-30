@@ -6,23 +6,63 @@ import { Dropzone } from './components/Dropzone';
 import { SelectionView } from './components/SelectionView';
 import { ProcessingView } from './components/ProcessingView';
 import { CompleteView } from './components/CompleteView';
+import { Auth } from './components/Auth';
 import { processMedia } from './services/mediaService';
-import { Layers, Zap, Info, ShieldCheck } from 'lucide-react';
+import { supabase } from './lib/supabase';
+import { Layers, Zap, Info, ShieldCheck, User, LogOut } from 'lucide-react';
 
 const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>(AppState.IDLE);
-  const [credits, setCredits] = useState<number>(() => {
-    const saved = localStorage.getItem('omni_credits');
-    return saved ? parseInt(saved, 10) : INITIAL_CREDITS;
-  });
+  const [user, setUser] = useState<any>(null);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [credits, setCredits] = useState<number>(INITIAL_CREDITS);
+  const [loadingCredits, setLoadingCredits] = useState(false);
   
   const [selectedFile, setSelectedFile] = useState<FileMetadata | null>(null);
   const [processingProgress, setProcessingProgress] = useState<ProcessingProgress>({ percentage: 0, step: '' });
   const [outputResult, setOutputResult] = useState<{ url: string; filename: string } | null>(null);
 
+  // Sync session and fetch credits
   useEffect(() => {
-    localStorage.setItem('omni_credits', credits.toString());
-  }, [credits]);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (session?.user) fetchUserCredits(session.user.id);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchUserCredits(session.user.id);
+      } else {
+        // Reset to initial credits if logged out
+        setCredits(INITIAL_CREDITS);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const fetchUserCredits = async (userId: string) => {
+    setLoadingCredits(true);
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('credits')
+      .eq('id', userId)
+      .single();
+
+    if (!error && data) {
+      setCredits(data.credits);
+    }
+    setLoadingCredits(false);
+  };
+
+  const syncCreditsToDB = async (newBalance: number) => {
+    if (!user) return;
+    await supabase
+      .from('profiles')
+      .update({ credits: newBalance })
+      .eq('id', user.id);
+  };
 
   const handleFileSelect = (file: FileMetadata) => {
     setSelectedFile(file);
@@ -33,7 +73,10 @@ const App: React.FC = () => {
     if (!selectedFile) return;
 
     const cost = settings.isTranscription ? COST_TRANSCRIPTION : COST_CONVERSION;
-    if (credits < cost) return;
+    if (credits < cost) {
+      alert("Insufficient operational credits.");
+      return;
+    }
 
     setAppState(AppState.PROCESSING);
     
@@ -42,8 +85,18 @@ const App: React.FC = () => {
         setProcessingProgress(p);
       });
       
+      const newBalance = credits - cost;
+      setCredits(newBalance);
       setOutputResult(result);
-      setCredits(prev => prev - cost);
+      
+      // Update DB only after success
+      if (user) {
+        await syncCreditsToDB(newBalance);
+      } else {
+        // If guest, keep it local
+        localStorage.setItem('omni_credits', newBalance.toString());
+      }
+
       setAppState(AppState.COMPLETE);
     } catch (err) {
       console.error(err);
@@ -58,9 +111,14 @@ const App: React.FC = () => {
     setAppState(AppState.IDLE);
   }, []);
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
+
   return (
     <div className="min-h-screen bg-[#0f172a] text-slate-200 flex flex-col antialiased">
-      {/* Surgical Navigation */}
+      {isAuthOpen && <Auth onClose={() => setIsAuthOpen(false)} />}
+
       <header className="sticky top-0 z-50 h-16 bg-[#0f172a]/80 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-8">
         <div className="flex items-center gap-4">
           <div className="w-9 h-9 bg-indigo-500 rounded-[6px] flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
@@ -79,16 +137,38 @@ const App: React.FC = () => {
               <span>Edge Isolated</span>
             </div>
             <div className="w-px h-4 bg-white/10" />
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 text-indigo-400">
               <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400/20" />
               <span>0ms Cloud Latency</span>
             </div>
           </div>
-          <CreditBadge credits={credits} />
+
+          <div className="flex items-center gap-3">
+            <CreditBadge credits={credits} isLoading={loadingCredits} />
+            
+            <div className="w-px h-8 bg-white/10" />
+
+            {user ? (
+              <button 
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 rounded-[8px] transition-all text-[10px] font-bold uppercase tracking-widest text-slate-300"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Terminate Session</span>
+              </button>
+            ) : (
+              <button 
+                onClick={() => setIsAuthOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-400 text-white rounded-[8px] transition-all text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-indigo-500/20"
+              >
+                <User className="w-3.5 h-3.5" />
+                Authorize
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
-      {/* Main Orchestration Area */}
       <main className="flex-1 flex flex-col items-center justify-center p-6 md:p-12">
         <div className="w-full max-w-4xl space-y-8">
           {appState === AppState.IDLE && (
@@ -98,7 +178,7 @@ const App: React.FC = () => {
               </h1>
               <p className="text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
                 Transcode, extract, and transcribe high-fidelity assets without leaving your browser. 
-                Secured by local compute, optimized for efficiency.
+                {user ? ' Balanced synced to your operator profile.' : ' Secured by local compute, optimized for efficiency.'}
               </p>
             </div>
           )}
@@ -148,7 +228,6 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      {/* Technical Footer */}
       <footer className="h-14 border-t border-white/5 flex items-center justify-between px-8 text-[10px] font-medium text-slate-500 uppercase tracking-[0.2em] bg-[#0b1222]">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
