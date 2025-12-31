@@ -18,15 +18,36 @@ export const Auth: React.FC<AuthProps> = ({ onClose }) => {
     setLoading(true);
     setError(null);
 
-    const { error } = isSignUp 
-      ? await supabase.auth.signUp({ email, password })
-      : await supabase.auth.signInWithPassword({ email, password });
+    console.log(`Initiating ${isSignUp ? 'SignUp' : 'SignIn'} for:`, email);
 
-    if (error) {
-      setError(error.message);
+    try {
+      const { data, error: authError } = isSignUp 
+        ? await supabase.auth.signUp({ 
+            email, 
+            password,
+            options: {
+              emailRedirectTo: window.location.origin,
+            }
+          })
+        : await supabase.auth.signInWithPassword({ email, password });
+
+      if (authError) {
+        console.error('Supabase Auth Error details:', {
+          message: authError.message,
+          status: authError.status,
+          name: authError.name,
+          fullError: authError
+        });
+        setError(authError.message);
+        setLoading(false);
+      } else {
+        console.log('Auth successful:', data);
+        onClose();
+      }
+    } catch (err) {
+      console.error('Unexpected Auth Exception:', err);
+      setError('An unexpected error occurred during authentication.');
       setLoading(false);
-    } else {
-      onClose();
     }
   };
 
