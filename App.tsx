@@ -9,7 +9,7 @@ import { CompleteView } from './components/CompleteView';
 import { Auth } from './components/Auth';
 import { processMedia } from './services/mediaService';
 import { supabase } from './lib/supabase';
-import { Layers, Zap, Info, ShieldCheck, User, LogOut } from 'lucide-react';
+import { Layers, Zap, Info, ShieldCheck, User, LogOut, Loader2 } from 'lucide-react';
 
 const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>(AppState.IDLE);
@@ -24,44 +24,77 @@ const App: React.FC = () => {
 
   // Sync session and fetch credits
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) fetchUserCredits(session.user.id);
-    });
+    const checkSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error("Session check error:", error);
+          return;
+        }
+        if (session?.user) {
+          console.log("Active session detected for:", session.user.email);
+          setUser(session.user);
+          fetchUserCredits(session.user.id);
+        }
+      } catch (err) {
+        console.error("Unexpected session check error:", err);
+      }
+    };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchUserCredits(session.user.id);
+    checkSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log(`Auth event triggered: ${event}`, session?.user?.email);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      
+      if (currentUser) {
+        fetchUserCredits(currentUser.id);
       } else {
-        // Reset to initial credits if logged out
+        // Clear local state on logout
         setCredits(INITIAL_CREDITS);
+        setLoadingCredits(false);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const fetchUserCredits = async (userId: string) => {
     setLoadingCredits(true);
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('credits')
-      .eq('id', userId)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('credits')
+        .eq('id', userId)
+        .single();
 
-    if (!error && data) {
-      setCredits(data.credits);
+      if (error) {
+        console.error("Error fetching credits:", error.message);
+      } else if (data) {
+        setCredits(data.credits);
+      }
+    } catch (err) {
+      console.error("Unexpected error fetching credits:", err);
+    } finally {
+      setLoadingCredits(false);
     }
-    setLoadingCredits(false);
   };
 
   const syncCreditsToDB = async (newBalance: number) => {
     if (!user) return;
-    await supabase
-      .from('profiles')
-      .update({ credits: newBalance })
-      .eq('id', user.id);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ credits: newBalance })
+        .eq('id', user.id);
+      
+      if (error) console.error("Error syncing credits to DB:", error.message);
+    } catch (err) {
+      console.error("Unexpected error syncing credits:", err);
+    }
   };
 
   const handleFileSelect = (file: FileMetadata) => {
@@ -93,13 +126,13 @@ const App: React.FC = () => {
       if (user) {
         await syncCreditsToDB(newBalance);
       } else {
-        // If guest, keep it local
+        // If guest, keep it local (though mostly handled by initial state if not logged in)
         localStorage.setItem('omni_credits', newBalance.toString());
       }
 
       setAppState(AppState.COMPLETE);
     } catch (err) {
-      console.error(err);
+      console.error("Media processing sequence failed:", err);
       setAppState(AppState.ERROR);
     }
   };
@@ -112,7 +145,20 @@ const App: React.FC = () => {
   }, []);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    console.log("Initiating session termination...");
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("Supabase signOut error:", error.message);
+        // Force state reset even if server call fails
+        setUser(null);
+        setCredits(INITIAL_CREDITS);
+      }
+    } catch (err) {
+      console.error("Unexpected error during logout:", err);
+      setUser(null);
+      setCredits(INITIAL_CREDITS);
+    }
   };
 
   return (
@@ -120,7 +166,7 @@ const App: React.FC = () => {
       {isAuthOpen && <Auth onClose={() => setIsAuthOpen(false)} />}
 
       <header className="sticky top-0 z-50 h-16 bg-[#0f172a]/80 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-8">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 cursor-pointer" onClick={handleReset}>
           <div className="w-9 h-9 bg-indigo-500 rounded-[6px] flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
             <Layers className="w-5 h-5" />
           </div>
@@ -151,9 +197,9 @@ const App: React.FC = () => {
             {user ? (
               <button 
                 onClick={handleLogout}
-                className="flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 rounded-[8px] transition-all text-[10px] font-bold uppercase tracking-widest text-slate-300"
+                className="flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 hover:text-white rounded-[8px] transition-all text-[10px] font-bold uppercase tracking-widest text-slate-300 border border-white/5"
               >
-                <LogOut className="w-3.5 h-3.5" />
+                <LogOut className="w-3.5 h-3.5 text-indigo-400" />
                 <span className="hidden sm:inline">Terminate Session</span>
               </button>
             ) : (
@@ -178,7 +224,7 @@ const App: React.FC = () => {
               </h1>
               <p className="text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
                 Transcode, extract, and transcribe high-fidelity assets without leaving your browser. 
-                {user ? ' Balanced synced to your operator profile.' : ' Secured by local compute, optimized for efficiency.'}
+                {user ? `Welcome back, ${user.email}. Credits are synced to your profile.` : ' Secured by local compute, optimized for efficiency.'}
               </p>
             </div>
           )}
