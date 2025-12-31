@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { LogIn, UserPlus, Loader2, X } from 'lucide-react';
@@ -18,7 +19,7 @@ export const Auth: React.FC<AuthProps> = ({ onClose }) => {
     setLoading(true);
     setError(null);
 
-    console.log(`Initiating ${isSignUp ? 'SignUp' : 'SignIn'} for:`, email);
+    console.log(`[AUTH] Initiating ${isSignUp ? 'SignUp' : 'SignIn'} for:`, email);
 
     try {
       const { data, error: authError } = isSignUp 
@@ -32,21 +33,22 @@ export const Auth: React.FC<AuthProps> = ({ onClose }) => {
         : await supabase.auth.signInWithPassword({ email, password });
 
       if (authError) {
-        console.error('Supabase Auth Error details:', {
-          message: authError.message,
-          status: authError.status,
-          name: authError.name,
-          fullError: authError
-        });
-        setError(authError.message);
+        // Detailed logging to fix [object Object] issue
+        console.group('Supabase Auth Failure');
+        console.error('Error Message:', authError.message);
+        console.error('Error Status:', authError.status);
+        console.error('Full Error Object:', JSON.stringify(authError, null, 2));
+        console.groupEnd();
+
+        setError(`${authError.message} (Status: ${authError.status || 'unknown'})`);
         setLoading(false);
       } else {
-        console.log('Auth successful:', data);
+        console.log('[AUTH] Success:', data);
         onClose();
       }
-    } catch (err) {
-      console.error('Unexpected Auth Exception:', err);
-      setError('An unexpected error occurred during authentication.');
+    } catch (err: any) {
+      console.error('[AUTH] Unexpected Exception:', err);
+      setError(`Unexpected Error: ${err.message || 'Check console logs'}`);
       setLoading(false);
     }
   };
@@ -66,8 +68,14 @@ export const Auth: React.FC<AuthProps> = ({ onClose }) => {
 
         <form onSubmit={handleAuth} className="p-8 space-y-6">
           {error && (
-            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs font-bold uppercase tracking-wider">
+            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs font-bold leading-relaxed border-red-500/30">
+              <span className="uppercase tracking-wider block mb-1">Authorization Fault:</span>
               {error}
+              {error.toLowerCase().includes('apiKey') || error.includes('400') ? (
+                <div className="mt-2 opacity-80 text-[10px] border-t border-red-500/10 pt-2">
+                  Tip: Your Supabase Anon Key should start with 'eyJ'. Your current key looks like a Stripe key (sb_publishable_...), which is invalid for Supabase.
+                </div>
+              ) : null}
             </div>
           )}
           

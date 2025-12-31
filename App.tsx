@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { AppState, FileMetadata, ConversionSettings, ProcessingProgress } from './types';
 import { INITIAL_CREDITS, COST_CONVERSION, COST_TRANSCRIPTION } from './constants';
@@ -28,30 +29,29 @@ const App: React.FC = () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
-          console.error("Session check error:", error);
+          console.error("[SESSION] Check fault:", error);
           return;
         }
         if (session?.user) {
-          console.log("Active session detected for:", session.user.email);
+          console.log("[SESSION] Active operator detected:", session.user.email);
           setUser(session.user);
           fetchUserCredits(session.user.id);
         }
       } catch (err) {
-        console.error("Unexpected session check error:", err);
+        console.error("[SESSION] Unexpected check error:", err);
       }
     };
 
     checkSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log(`Auth event triggered: ${event}`, session?.user?.email);
+      console.log(`[AUTH] Event: ${event} | User: ${session?.user?.email || 'None'}`);
       const currentUser = session?.user ?? null;
       setUser(currentUser);
       
       if (currentUser) {
         fetchUserCredits(currentUser.id);
       } else {
-        // Clear local state on logout
         setCredits(INITIAL_CREDITS);
         setLoadingCredits(false);
       }
@@ -72,12 +72,12 @@ const App: React.FC = () => {
         .single();
 
       if (error) {
-        console.error("Error fetching credits:", error.message);
+        console.error("[CREDITS] Fetch fault:", error.message);
       } else if (data) {
         setCredits(data.credits);
       }
     } catch (err) {
-      console.error("Unexpected error fetching credits:", err);
+      console.error("[CREDITS] Unexpected fetch error:", err);
     } finally {
       setLoadingCredits(false);
     }
@@ -91,9 +91,9 @@ const App: React.FC = () => {
         .update({ credits: newBalance })
         .eq('id', user.id);
       
-      if (error) console.error("Error syncing credits to DB:", error.message);
+      if (error) console.error("[CREDITS] Sync fault:", error.message);
     } catch (err) {
-      console.error("Unexpected error syncing credits:", err);
+      console.error("[CREDITS] Unexpected sync error:", err);
     }
   };
 
@@ -107,7 +107,7 @@ const App: React.FC = () => {
 
     const cost = settings.isTranscription ? COST_TRANSCRIPTION : COST_CONVERSION;
     if (credits < cost) {
-      alert("Insufficient operational credits.");
+      alert("Insufficient operational credits for this extraction sequence.");
       return;
     }
 
@@ -122,17 +122,15 @@ const App: React.FC = () => {
       setCredits(newBalance);
       setOutputResult(result);
       
-      // Update DB only after success
       if (user) {
         await syncCreditsToDB(newBalance);
       } else {
-        // If guest, keep it local (though mostly handled by initial state if not logged in)
         localStorage.setItem('omni_credits', newBalance.toString());
       }
 
       setAppState(AppState.COMPLETE);
     } catch (err) {
-      console.error("Media processing sequence failed:", err);
+      console.error("[SURGERY] Extraction interrupted:", err);
       setAppState(AppState.ERROR);
     }
   };
@@ -145,19 +143,20 @@ const App: React.FC = () => {
   }, []);
 
   const handleLogout = async () => {
-    console.log("Initiating session termination...");
+    console.log("[AUTH] Terminating operator session...");
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error("Supabase signOut error:", error.message);
-        // Force state reset even if server call fails
-        setUser(null);
-        setCredits(INITIAL_CREDITS);
-      }
-    } catch (err) {
-      console.error("Unexpected error during logout:", err);
+      // Clear local UI state IMMEDIATELY to resolve the "button not working" perception
       setUser(null);
       setCredits(INITIAL_CREDITS);
+      setAppState(AppState.IDLE);
+
+      // Attempt clean server logout
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("[AUTH] Supabase signOut fault:", error.message);
+      }
+    } catch (err) {
+      console.error("[AUTH] Unexpected logout exception:", err);
     }
   };
 
@@ -224,7 +223,7 @@ const App: React.FC = () => {
               </h1>
               <p className="text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
                 Transcode, extract, and transcribe high-fidelity assets without leaving your browser. 
-                {user ? `Welcome back, ${user.email}. Credits are synced to your profile.` : ' Secured by local compute, optimized for efficiency.'}
+                {user ? `Welcome back, ${user.email}. System assets online.` : ' Secured by local compute, optimized for efficiency.'}
               </p>
             </div>
           )}
