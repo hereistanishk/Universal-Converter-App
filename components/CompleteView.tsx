@@ -1,5 +1,5 @@
 import React from 'react';
-import { Inbox, Download, RotateCcw, Box, HardDrive, Share2, ArrowDown, CheckCircle2 } from 'lucide-react';
+    import { Download, CheckCircle, ArrowLeft, Share2, FileDown } from 'lucide-react';
 
 interface CompleteViewProps {
   results: { url: string; filename: string }[];
@@ -21,81 +21,65 @@ export const CompleteView: React.FC<CompleteViewProps> = ({ results, onReset }) 
   };
 
   return (
-    <div className="h-full flex flex-col slide-up relative">
-      {/* Success Signal - Hierarchy 1 */}
-      <div className="flex flex-col items-center py-10 shrink-0">
-        <div className="relative mb-5">
-          <div className="w-16 h-16 bg-emerald-500/5 rounded-2xl flex items-center justify-center border border-emerald-500/10 text-emerald-500">
-            <CheckCircle2 className="w-8 h-8" strokeWidth={1.5} />
+    <div className="safe-scroll-container slide-up">
+      <div className="flex-1 flex flex-col items-center justify-center p-8">
+        <div className="relative mb-6">
+          <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center border border-emerald-500/20 text-emerald-500">
+            <CheckCircle className="w-10 h-10" strokeWidth={2.5} />
           </div>
-          <div className="absolute inset-0 border border-emerald-500/10 rounded-2xl scale-125 pulse-ring" />
+          <div className="absolute inset-0 bg-emerald-500/10 blur-2xl rounded-full" />
         </div>
         
-        <div className="text-center space-y-1">
-          <h3 className="text-xl font-black uppercase tracking-widest text-white italic">Synthesis Verified</h3>
-          <p className="text-[9px] text-slate-700 font-bold uppercase tracking-[0.5em]">
-            {results.length} Object{results.length > 1 ? 's' : ''} successfully localized
+        <div className="text-center space-y-2">
+          <h3 className="text-2xl font-bold text-white">Files are ready!</h3>
+          <p className="text-sm text-slate-500">
+            {results.length} item{results.length > 1 ? 's' : ''} saved to your computer.
           </p>
         </div>
-      </div>
 
-      {/* Result Cards - Gestalt proximity */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar px-6 space-y-2 pb-8">
-        <div className="max-w-xl mx-auto space-y-1.5">
+        <div className="w-full mt-10 space-y-2 max-h-[160px] overflow-y-auto custom-scrollbar px-2">
           {results.map((res, idx) => (
             <div 
               key={idx} 
-              className="flex items-center justify-between p-3.5 bg-white/[0.01] border border-white/[0.03] rounded-xl group hover:border-emerald-500/20 transition-all"
+              className="flex items-center justify-between p-3 bg-white/5 border border-white/10 rounded-xl"
             >
-              <div className="flex items-center gap-3.5 overflow-hidden">
-                 <div className="w-8 h-8 flex items-center justify-center bg-white/5 rounded-lg text-emerald-500/60 group-hover:text-emerald-500 transition-colors">
-                    <Box className="w-3.5 h-3.5" />
-                 </div>
-                 <div className="flex flex-col overflow-hidden">
-                    <span className="text-[9px] font-bold uppercase tracking-widest truncate text-slate-400">
-                      {res.filename}
-                    </span>
-                    <span className="text-[7px] font-black text-slate-800 uppercase tracking-widest">Binary Object</span>
-                 </div>
-              </div>
+              <span className="text-xs font-semibold text-slate-300 truncate pr-4">
+                {res.filename}
+              </span>
               <button 
                 onClick={() => triggerDownload(res.url, res.filename)}
-                className="w-9 h-9 flex items-center justify-center bg-white/5 hover:bg-emerald-500 text-slate-700 hover:text-white rounded-lg transition-all border border-transparent active:scale-90"
+                className="p-2 hover:bg-emerald-500 text-slate-400 hover:text-white rounded-lg transition-all"
               >
-                 <Download className="w-3.5 h-3.5" />
+                 <Download className="w-4 h-4" />
               </button>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Action Zone - Hierarchy: Primary goal in Thumb Zone */}
-      <div className="shrink-0 p-8 border-t border-white/[0.03] bg-black/10">
-        <div className="max-w-sm mx-auto flex flex-col items-center gap-8">
+      <div className="p-6 border-t border-white/5 bg-slate-900/60 backdrop-blur-md">
+        <div className="flex flex-col gap-4">
           <button
             onClick={handleBatchDownload}
-            className="w-full btn-target rounded-xl bg-emerald-600/90 hover:bg-emerald-600 text-white text-[11px] font-black uppercase tracking-[0.6em] transition-all hero-glow border border-emerald-400/20 group active:scale-[0.97]"
+            className="w-full btn-target bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl shadow-lg shadow-emerald-900/20 active:scale-95 transition-all"
           >
-            Extract Assets
+            <FileDown className="w-5 h-5 mr-3" />
+            Download Now
           </button>
 
-          <div className="flex items-center gap-12">
+          <div className="flex items-center justify-center gap-8">
             <button
               onClick={onReset}
-              className="flex items-center gap-2 text-[8px] font-black text-slate-700 uppercase tracking-[0.4em] hover:text-white transition-colors group"
+              className="text-xs font-bold text-slate-500 hover:text-white flex items-center gap-2 transition-colors"
             >
-              <RotateCcw className="w-3 h-3 group-hover:-rotate-90 transition-transform" />
-              Reset Node
+              <ArrowLeft className="w-3.5 h-3.5" />
+              Start over
             </button>
-            <div className="w-0.5 h-0.5 bg-slate-800 rounded-full" />
-            <button className="flex items-center gap-2 text-[8px] font-black text-slate-700 uppercase tracking-[0.4em] hover:text-white transition-colors">
-              <Share2 className="w-3 h-3" />
-              Relay
+            <div className="w-1 h-1 bg-slate-800 rounded-full" />
+            <button className="text-xs font-bold text-slate-500 hover:text-white flex items-center gap-2 transition-colors">
+              <Share2 className="w-3.5 h-3.5" />
+              Share
             </button>
-          </div>
-          
-          <div className="text-[7px] font-black text-slate-900 uppercase tracking-[0.4em] italic">
-            Memory purged on exit
           </div>
         </div>
       </div>

@@ -9,14 +9,13 @@ import { Auth } from './components/Auth';
 import { processMedia } from './services/mediaService';
 import { supabase } from './lib/supabase';
 import { 
-  Box, 
+  FileBox, 
   LogOut, 
   AlertCircle, 
   CheckCircle2, 
   User, 
-  Sparkles, 
-  Cpu, 
-  Terminal
+  Zap,
+  Lock
 } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -77,7 +76,7 @@ const App: React.FC = () => {
     const totalCost = unitCost * selectedFiles.length;
 
     if (credits < totalCost) {
-      setToast({ message: "Insufficent Energy", type: 'error' });
+      setToast({ message: "Not enough points", type: 'error' });
       return;
     }
 
@@ -92,7 +91,7 @@ const App: React.FC = () => {
           const currentStepProgress = p.percentage / selectedFiles.length;
           setProcessingProgress({
             percentage: Math.round(overallBase + currentStepProgress),
-            step: `Synthesizing ${i + 1}/${selectedFiles.length}: ${p.step}`
+            step: `Working on file ${i + 1} of ${selectedFiles.length}...`
           });
         });
         results.push(result);
@@ -106,7 +105,7 @@ const App: React.FC = () => {
       setAppState(AppState.COMPLETE);
     } catch (err) {
       setAppState(AppState.ERROR);
-      setToast({ message: "Synthesis Failure", type: 'error' });
+      setToast({ message: "Something went wrong", type: 'error' });
     }
   };
 
@@ -118,57 +117,54 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-[#020617] text-slate-400 overflow-hidden font-inter select-none">
+    <div className="h-screen w-screen flex flex-col bg-[#0f172a] text-slate-300 overflow-hidden select-none">
       {isAuthOpen && <Auth onClose={() => setIsAuthOpen(false)} />}
       
-      {/* Toast Notification */}
+      {/* Friendly Notifications */}
       <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[200] w-full max-w-xs px-4 pointer-events-none">
         {toast && (
-          <div className="flex items-center gap-3 px-5 py-3 rounded-xl glass-panel surgical-border shadow-2xl slide-up pointer-events-auto">
-            {toast.type === 'success' ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <AlertCircle className="w-4 h-4 text-rose-500" />}
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-200">{toast.message}</span>
+          <div className="flex items-center gap-3 px-5 py-3 rounded-2xl glass-panel shadow-2xl slide-up pointer-events-auto">
+            {toast.type === 'success' ? <CheckCircle2 className="w-5 h-5 text-emerald-400" /> : <AlertCircle className="w-5 h-5 text-rose-400" />}
+            <span className="text-sm font-semibold text-slate-100">{toast.message}</span>
           </div>
         )}
       </div>
 
-      {/* Header - 1px refined */}
-      <header className="h-[72px] flex items-center justify-between px-8 border-b border-white/[0.03] bg-black/20 shrink-0">
-        <div className="flex items-center gap-4 cursor-pointer" onClick={handleReset}>
-          <div className="w-9 h-9 bg-blue-500/5 rounded-lg flex items-center justify-center border border-blue-500/10 transition-colors hover:border-blue-500/30">
-            <Box className="w-4 h-4 text-blue-500" />
+      {/* Header - Simple and approachable */}
+      <header className="h-[64px] flex items-center justify-between px-6 border-b border-white/5 shrink-0">
+        <div className="flex items-center gap-3 cursor-pointer" onClick={handleReset}>
+          <div className="w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center">
+            <FileBox className="w-5 h-5 text-blue-500" />
           </div>
-          <div className="flex flex-col">
-            <span className="text-[10px] font-black text-white tracking-[0.3em] uppercase italic">OmniConvert</span>
-            <span className="text-[8px] font-bold text-slate-700 uppercase tracking-widest">Surgical_v4.5</span>
-          </div>
+          <span className="text-lg font-bold text-white tracking-tight">OmniConvert</span>
         </div>
 
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2.5 px-3 py-1.5 bg-blue-500/5 rounded-lg border border-blue-500/10">
-            <Sparkles className="w-3 h-3 text-blue-400" />
-            <span className="text-[10px] font-black mono text-blue-400">{credits.toLocaleString()}U</span>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/5 rounded-full border border-blue-500/10">
+            <Zap className="w-3 h-3 text-blue-400" />
+            <span className="text-xs font-bold text-blue-400">{credits.toLocaleString()} pts</span>
           </div>
           {user ? (
-            <button onClick={() => supabase.auth.signOut()} className="flex items-center gap-3 group">
-              <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:border-white/20 transition-all">
-                <User className="w-3.5 h-3.5 text-slate-500" />
+            <button onClick={() => supabase.auth.signOut()} className="flex items-center gap-2 group">
+              <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:border-white/20">
+                <User className="w-4 h-4 text-slate-400" />
               </div>
-              <LogOut className="w-3.5 h-3.5 text-slate-700 group-hover:text-slate-400 transition-colors" />
+              <LogOut className="w-4 h-4 text-slate-500" />
             </button>
           ) : (
             <button 
               onClick={() => setIsAuthOpen(true)} 
-              className="px-4 py-2 bg-white/5 border border-white/10 text-white rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-white/10 active:scale-95 transition-all"
+              className="text-xs font-bold text-white bg-blue-600 px-4 py-2 rounded-lg hover:bg-blue-500 active:scale-95 transition-all"
             >
-              Access
+              Sign In
             </button>
           )}
         </div>
       </header>
 
-      {/* Main Stage - Viewport Safety Container */}
-      <main className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 overflow-hidden relative">
-        <div className="w-full max-w-5xl h-full glass-panel rounded-[32px] overflow-hidden flex flex-col relative surgical-border bg-[#020617]/40">
+      {/* The Stage - Centered max-w-md Container */}
+      <main className="flex-1 flex flex-col items-center justify-center p-4 overflow-hidden">
+        <div className="w-full max-w-md h-full glass-panel rounded-[32px] overflow-hidden flex flex-col relative bg-slate-900/20">
           
           {appState === AppState.IDLE && (
             <Dropzone onFilesSelect={(files) => { setSelectedFiles(files); setAppState(AppState.SELECTION); }} />
@@ -179,9 +175,7 @@ const App: React.FC = () => {
           )}
 
           {appState === AppState.PROCESSING && (
-            <div className="flex-1 overflow-hidden">
-               <ProcessingView progress={processingProgress} />
-            </div>
+            <ProcessingView progress={processingProgress} />
           )}
 
           {appState === AppState.COMPLETE && (
@@ -189,36 +183,25 @@ const App: React.FC = () => {
           )}
 
           {appState === AppState.ERROR && (
-            <div className="flex flex-col items-center justify-center h-full text-center space-y-6 slide-up">
-              <div className="w-16 h-16 bg-rose-500/5 rounded-2xl flex items-center justify-center border border-rose-500/10">
+            <div className="flex flex-col items-center justify-center h-full text-center space-y-6 slide-up p-8">
+              <div className="w-16 h-16 bg-rose-500/10 rounded-2xl flex items-center justify-center border border-rose-500/20">
                 <AlertCircle className="w-8 h-8 text-rose-500" />
               </div>
-              <div className="space-y-1">
-                <h3 className="text-lg font-black uppercase tracking-wider text-rose-500">Node Fault</h3>
-                <p className="text-[9px] text-slate-700 uppercase tracking-widest">Internal Engine Thread Aborted</p>
+              <div className="space-y-2">
+                <h3 className="text-xl font-bold text-white">Conversion failed</h3>
+                <p className="text-sm text-slate-400">Please try again with a different file.</p>
               </div>
-              <button onClick={handleReset} className="px-8 py-3 bg-white text-black rounded-lg text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all">Reset Core</button>
+              <button onClick={handleReset} className="btn-target w-full bg-white text-black rounded-xl active:scale-95">Try Again</button>
             </div>
           )}
         </div>
       </main>
 
-      {/* Footer System Status */}
-      <footer className="h-12 border-t border-white/[0.03] flex items-center justify-between px-8 bg-black/10 shrink-0">
-        <div className="flex items-center gap-8">
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/50 pulse-ring" />
-            <span className="text-[8px] font-bold text-slate-600 uppercase tracking-[0.2em]">Core: Online</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Cpu className="w-3 h-3 text-slate-800" />
-            <span className="text-[8px] font-bold text-slate-600 uppercase tracking-[0.2em]">WASM: Multi-Thread</span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4 opacity-30">
-           <Terminal className="w-3 h-3 text-slate-700" />
-           <span className="text-[8px] font-bold text-slate-700 uppercase tracking-widest">Client_Side Synthesis Active</span>
+      {/* Simple Footer */}
+      <footer className="h-10 flex items-center justify-center px-6 shrink-0">
+        <div className="flex items-center gap-2 opacity-40">
+          <Lock className="w-3 h-3" />
+          <span className="text-[10px] font-medium uppercase tracking-widest">Private & Secured</span>
         </div>
       </footer>
     </div>
