@@ -117,7 +117,7 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-[#0f172a] text-slate-300 overflow-hidden select-none">
+    <div className="h-[100dvh] w-screen flex flex-col bg-[#0f172a] text-slate-300 overflow-hidden select-none">
       {isAuthOpen && <Auth onClose={() => setIsAuthOpen(false)} />}
       
       {/* Notifications */}
