@@ -23,6 +23,8 @@ export interface ConversionSettings {
   targetFormat: ConversionFormat;
   resolution?: '720p' | '1080p' | '4K';
   quality?: 'Small File' | 'Balanced' | 'High Quality';
+  imageQuality?: 'Good' | 'Great' | 'Best';
+  bitrate?: '128kbps' | '192kbps' | '320kbps';
   isTranscription?: boolean;
 }
 

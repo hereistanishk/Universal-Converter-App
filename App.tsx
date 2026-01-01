@@ -120,7 +120,7 @@ const App: React.FC = () => {
     <div className="h-screen w-screen flex flex-col bg-[#0f172a] text-slate-300 overflow-hidden select-none">
       {isAuthOpen && <Auth onClose={() => setIsAuthOpen(false)} />}
       
-      {/* Friendly Notifications */}
+      {/* Notifications */}
       <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[200] w-full max-w-xs px-4 pointer-events-none">
         {toast && (
           <div className="flex items-center gap-3 px-5 py-3 rounded-2xl glass-panel shadow-2xl slide-up pointer-events-auto">
@@ -130,8 +130,8 @@ const App: React.FC = () => {
         )}
       </div>
 
-      {/* Header */}
-      <header className="h-[64px] flex items-center justify-between px-6 border-b border-white/5 shrink-0">
+      {/* Header - Fixed Branding */}
+      <header className="h-[64px] flex items-center justify-between px-6 border-b border-white/5 shrink-0 z-50 bg-slate-900/50 backdrop-blur-md">
         <div className="flex items-center gap-3 cursor-pointer" onClick={handleReset}>
           <div className="w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center">
             <FileBox className="w-5 h-5 text-blue-500" />
@@ -162,47 +162,53 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      {/* The Stage */}
+      {/* Main Content Scaffold */}
       <main className="flex-1 flex flex-col items-center justify-center p-4 overflow-hidden">
-        <div className="w-full max-w-md min-h-[400px] max-h-[90dvh] glass-panel rounded-[32px] overflow-hidden flex flex-col relative bg-slate-900/20">
-          
-          {appState === AppState.IDLE && (
-            <Dropzone onFilesSelect={(files) => { setSelectedFiles(files); setAppState(AppState.SELECTION); }} />
-          )}
-          
-          {appState === AppState.SELECTION && (
-            <SelectionView files={selectedFiles} onCancel={handleReset} onProcess={handleStartProcessing} credits={credits} />
-          )}
+        <div className="w-full max-w-md h-full glass-panel rounded-[32px] overflow-hidden flex flex-col relative bg-slate-900/20 shadow-2xl">
+          <div className="flex-1 overflow-hidden flex flex-col">
+            {appState === AppState.IDLE && (
+              <Dropzone onFilesSelect={(files) => { setSelectedFiles(files); setAppState(AppState.SELECTION); }} />
+            )}
+            
+            {appState === AppState.SELECTION && (
+              <SelectionView files={selectedFiles} onCancel={handleReset} onProcess={handleStartProcessing} credits={credits} />
+            )}
 
-          {appState === AppState.PROCESSING && (
-            <ProcessingView progress={processingProgress} />
-          )}
+            {appState === AppState.PROCESSING && (
+              <ProcessingView progress={processingProgress} />
+            )}
 
-          {appState === AppState.COMPLETE && (
-            <CompleteView results={outputResults} onReset={handleReset} />
-          )}
+            {appState === AppState.COMPLETE && (
+              <CompleteView results={outputResults} onReset={handleReset} />
+            )}
 
-          {appState === AppState.ERROR && (
-            <div className="flex flex-col items-center justify-center h-full text-center space-y-6 slide-up p-8">
-              <div className="w-16 h-16 bg-rose-500/10 rounded-2xl flex items-center justify-center border border-rose-500/20">
-                <AlertCircle className="w-8 h-8 text-rose-500" />
+            {appState === AppState.ERROR && (
+              <div className="flex flex-col items-center justify-center h-full text-center space-y-6 slide-up p-8">
+                <div className="w-16 h-16 bg-rose-500/10 rounded-2xl flex items-center justify-center border border-rose-500/20">
+                  <AlertCircle className="w-8 h-8 text-rose-500" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-xl font-bold text-white">Conversion failed</h3>
+                  <p className="text-sm text-slate-400">Please try again with a different file.</p>
+                </div>
+                <button onClick={handleReset} className="btn-target w-full bg-white text-black rounded-xl active:scale-95 font-bold">Try Again</button>
               </div>
-              <div className="space-y-2">
-                <h3 className="text-xl font-bold text-white">Conversion failed</h3>
-                <p className="text-sm text-slate-400">Please try again with a different file.</p>
-              </div>
-              <button onClick={handleReset} className="btn-target w-full bg-white text-black rounded-xl active:scale-95">Try Again</button>
-            </div>
-          )}
+            )}
+          </div>
+          
+          {/* Trust Badge - Fixed Bottom */}
+          <div className="px-6 py-3 bg-black/10 flex items-center justify-center gap-2 shrink-0 border-t border-white/5">
+             <Lock className="w-2.5 h-2.5 text-slate-500" />
+             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">
+               Private & Secure
+             </span>
+          </div>
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="h-10 flex items-center justify-center px-6 shrink-0">
-        <div className="flex items-center gap-2 opacity-40">
-          <Lock className="w-3 h-3" />
-          <span className="text-[10px] font-medium uppercase tracking-widest">Private & Local</span>
-        </div>
+      {/* App Version Info */}
+      <footer className="h-8 flex items-center justify-center px-6 shrink-0 bg-slate-950/20">
+        <span className="text-[9px] font-bold text-slate-700 uppercase tracking-[0.2em]">OmniConvert v4.5</span>
       </footer>
     </div>
   );

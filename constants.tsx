@@ -40,3 +40,5 @@ export const FORMAT_MAP: Record<ConversionCategory, { id: ConversionFormat; labe
 
 export const RESOLUTIONS = ['720p', '1080p', '4K'] as const;
 export const QUALITIES = ['Small File', 'Balanced', 'High Quality'] as const;
+export const IMAGE_QUALITIES = ['Good', 'Great', 'Best'] as const;
+export const BITRATES = ['128kbps', '192kbps', '320kbps'] as const;
