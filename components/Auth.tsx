@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { LogIn, UserPlus, Loader2, X } from 'lucide-react';
+import { LogIn, UserPlus, Loader2, X, Fingerprint } from 'lucide-react';
 
 interface AuthProps {
   onClose: () => void;
@@ -19,90 +18,65 @@ export const Auth: React.FC<AuthProps> = ({ onClose }) => {
     setLoading(true);
     setError(null);
 
-    console.log(`[AUTH] Initiating ${isSignUp ? 'SignUp' : 'SignIn'} for:`, email);
-
     try {
-      const { data, error: authError } = isSignUp 
-        ? await supabase.auth.signUp({ 
-            email, 
-            password,
-            options: {
-              emailRedirectTo: window.location.origin,
-            }
-          })
+      const { error: authError } = isSignUp 
+        ? await supabase.auth.signUp({ email, password })
         : await supabase.auth.signInWithPassword({ email, password });
 
       if (authError) {
-        // Detailed logging to fix [object Object] issue
-        console.group('Supabase Auth Failure');
-        console.error('Error Message:', authError.message);
-        console.error('Error Status:', authError.status);
-        console.error('Full Error Object:', JSON.stringify(authError, null, 2));
-        console.groupEnd();
-
-        setError(`${authError.message} (Status: ${authError.status || 'unknown'})`);
+        setError(authError.message);
         setLoading(false);
       } else {
-        console.log('[AUTH] Success:', data);
         onClose();
       }
-    } catch (err: any) {
-      console.error('[AUTH] Unexpected Exception:', err);
-      setError(`Unexpected Error: ${err.message || 'Check console logs'}`);
+    } catch (err) {
+      setError('System authentication fault.');
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm">
-      <div className="progressive-reveal w-full max-w-md glass-panel rounded-[12px] border border-white/10 overflow-hidden">
-        <div className="p-6 bg-white/[0.03] border-b border-white/5 flex items-center justify-between">
-          <h3 className="text-xl font-bold text-white flex items-center gap-2">
-            {isSignUp ? <UserPlus className="w-5 h-5 text-indigo-400" /> : <LogIn className="w-5 h-5 text-indigo-400" />}
-            {isSignUp ? 'Create Operator Profile' : 'Operator Authentication'}
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-8 bg-[#020617]/95 backdrop-blur-xl">
+      <div className="w-full max-w-md glass-panel rounded-3xl overflow-hidden progressive-reveal shadow-[0_0_100px_rgba(0,0,0,0.5)] border-white/10">
+        <div className="p-8 border-b border-white/5 flex items-center justify-between">
+          <h3 className="text-xs font-black text-white uppercase tracking-[0.3em] flex items-center gap-4">
+            <div className="p-2 bg-blue-500/10 rounded-lg">
+              {isSignUp ? <UserPlus className="w-5 h-5 text-blue-500" strokeWidth={1.5} /> : <Fingerprint className="w-5 h-5 text-blue-500" strokeWidth={1.5} />}
+            </div>
+            {isSignUp ? 'Node Registration' : 'Operator Login'}
           </h3>
-          <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-full transition-colors text-slate-500 hover:text-white">
-            <X className="w-5 h-5" />
+          <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-lg transition-colors text-slate-600 hover:text-white border border-transparent hover:border-white/10">
+            <X className="w-5 h-5" strokeWidth={1.5} />
           </button>
         </div>
 
-        <form onSubmit={handleAuth} className="p-8 space-y-6">
+        <form onSubmit={handleAuth} className="p-10 space-y-8">
           {error && (
-            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs font-bold leading-relaxed border-red-500/30">
-              <span className="uppercase tracking-wider block mb-1">Authorization Fault:</span>
-              {error}
-              {error.toLowerCase().includes('apiKey') || error.includes('400') ? (
-                <div className="mt-2 opacity-80 text-[10px] border-t border-red-500/10 pt-2">
-                  Tip: Your Supabase Anon Key should start with 'eyJ'. Your current key looks like a Stripe key (sb_publishable_...), which is invalid for Supabase.
-                </div>
-              ) : null}
+            <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-[10px] text-rose-400 font-black uppercase tracking-widest leading-relaxed">
+              System fault: {error}
             </div>
           )}
           
-          <div className="space-y-4">
-            <div>
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-2 block">
-                Deployment Email
-              </label>
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] block">Identifier</label>
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-slate-900 border border-white/10 rounded-[8px] px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors mono text-sm"
+                className="w-full bg-[#020617]/50 border border-white/10 rounded-xl px-5 py-4 text-xs font-black text-white focus:outline-none focus:border-blue-500/50 transition-all mono placeholder-slate-800"
                 placeholder="operator@omni.system"
               />
             </div>
-            <div>
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-2 block">
-                Access Credentials
-              </label>
+            <div className="space-y-3">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] block">Security Cipher</label>
               <input
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-slate-900 border border-white/10 rounded-[8px] px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors mono text-sm"
+                className="w-full bg-[#020617]/50 border border-white/10 rounded-xl px-5 py-4 text-xs font-black text-white focus:outline-none focus:border-blue-500/50 transition-all mono placeholder-slate-800"
                 placeholder="••••••••"
               />
             </div>
@@ -110,18 +84,18 @@ export const Auth: React.FC<AuthProps> = ({ onClose }) => {
 
           <button
             disabled={loading}
-            className="w-full py-4 bg-indigo-500 text-white rounded-[8px] font-bold text-sm uppercase tracking-[0.2em] hover:bg-indigo-400 transition-all flex items-center justify-center gap-3 shadow-lg shadow-indigo-500/20 disabled:opacity-50"
+            className="relative overflow-hidden w-full py-5 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-[0.3em] hover:bg-blue-500 transition-all flex items-center justify-center gap-4 shadow-2xl shadow-blue-600/20 disabled:opacity-50 btn-sweep"
           >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (isSignUp ? 'Register operator' : 'Authorize Access')}
+            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (isSignUp ? 'Initialize Profile' : 'Authorize Node')}
           </button>
 
-          <div className="text-center pt-2">
+          <div className="text-center">
             <button
               type="button"
               onClick={() => setIsSignUp(!isSignUp)}
-              className="text-[10px] font-bold text-slate-500 uppercase tracking-widest hover:text-indigo-400 transition-colors"
+              className="text-[10px] font-black text-slate-600 uppercase tracking-widest hover:text-blue-500 transition-colors"
             >
-              {isSignUp ? 'Existing Operator? Sign In' : 'New Operator? Register Profile'}
+              {isSignUp ? 'Switch to Login' : 'Request Terminal Access'}
             </button>
           </div>
         </form>

@@ -3,55 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OmniConvert | The Surgical System</title>
-    <meta name="description" content="Client-side media conversion and AI transcription system.">
+    <title>OmniConvert | Universal Media Synthesis</title>
+    <meta name="description" content="Professional, high-end client-side media conversion.">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --grid-unit: 8px;
+            --accent: #3b82f6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --bg-deep: #020617;
+            --border-glow: rgba(59, 130, 246, 0.2);
         }
+
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #0f172a; /* Slate-900 for a surgical dark mode feel */
+            background: var(--bg-deep);
             color: #f8fafc;
             -webkit-font-smoothing: antialiased;
-            line-height: 1.5;
             margin: 0;
-            overflow-x: hidden;
+            padding: 0;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
         }
+
         .mono { font-family: 'JetBrains Mono', monospace; }
         
-        /* Surgical UI Accents */
         .glass-panel {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.2);
+            background: rgba(15, 23, 42, 0.3);
+            backdrop-filter: blur(24px);
+            border: 0.5px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
         }
 
-        .progressive-reveal {
-            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        .surgical-border {
+            border: 0.5px solid rgba(255, 255, 255, 0.1);
         }
 
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(12px); }
+        .hero-glow:hover {
+            box-shadow: 0 0 30px -5px var(--border-glow);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(0.99); opacity: 0.2; }
+            50% { transform: scale(1.01); opacity: 0.1; }
+            100% { transform: scale(0.99); opacity: 0.2; }
+        }
+
+        .pulse-ring {
+            animation: pulse-ring 4s ease-in-out infinite;
+        }
+
+        @keyframes slide-up {
+            from { opacity: 0; transform: translateY(8px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        .slide-up { animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        .custom-scrollbar::-webkit-scrollbar { width: 2px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
+        
+        /* 44px standard touch target */
+        .btn-target {
+            height: 44px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-target:active { transform: scale(0.97); opacity: 0.8; }
+        
+        .btn-target::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: white;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+        }
+        .btn-target:active::after { opacity: 0.05; }
+
+        :focus:not(:focus-visible) { outline: none; }
     </style>
 <script type="importmap">
 {
   "imports": {
+    "react": "https://esm.sh/react@19.0.0",
+    "react-dom": "https://esm.sh/react-dom@19.0.0",
+    "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
+    "lucide-react": "https://esm.sh/lucide-react@0.460.0",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.45.4",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3"
+    "react/": "https://esm.sh/react@^19.2.3/"
   }
 }
 </script>
