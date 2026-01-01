@@ -91,7 +91,7 @@ const App: React.FC = () => {
           const currentStepProgress = p.percentage / selectedFiles.length;
           setProcessingProgress({
             percentage: Math.round(overallBase + currentStepProgress),
-            step: `Working on file ${i + 1} of ${selectedFiles.length}...`
+            step: `Processing file ${i + 1}...`
           });
         });
         results.push(result);
@@ -130,7 +130,7 @@ const App: React.FC = () => {
         )}
       </div>
 
-      {/* Header - Simple and approachable */}
+      {/* Header */}
       <header className="h-[64px] flex items-center justify-between px-6 border-b border-white/5 shrink-0">
         <div className="flex items-center gap-3 cursor-pointer" onClick={handleReset}>
           <div className="w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center">
@@ -162,9 +162,9 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      {/* The Stage - Centered max-w-md Container */}
+      {/* The Stage */}
       <main className="flex-1 flex flex-col items-center justify-center p-4 overflow-hidden">
-        <div className="w-full max-w-md h-full glass-panel rounded-[32px] overflow-hidden flex flex-col relative bg-slate-900/20">
+        <div className="w-full max-w-md min-h-[400px] max-h-[90dvh] glass-panel rounded-[32px] overflow-hidden flex flex-col relative bg-slate-900/20">
           
           {appState === AppState.IDLE && (
             <Dropzone onFilesSelect={(files) => { setSelectedFiles(files); setAppState(AppState.SELECTION); }} />
@@ -197,11 +197,11 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      {/* Simple Footer */}
+      {/* Footer */}
       <footer className="h-10 flex items-center justify-center px-6 shrink-0">
         <div className="flex items-center gap-2 opacity-40">
           <Lock className="w-3 h-3" />
-          <span className="text-[10px] font-medium uppercase tracking-widest">Private & Secured</span>
+          <span className="text-[10px] font-medium uppercase tracking-widest">Private & Local</span>
         </div>
       </footer>
     </div>

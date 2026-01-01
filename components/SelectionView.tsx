@@ -1,16 +1,17 @@
-import React, { useState } from 'react';
-import { FileMetadata, ConversionFormat, ConversionSettings } from '../types';
-import { TARGET_OPTIONS } from '../constants';
+import React, { useState, useMemo } from 'react';
+import { FileMetadata, ConversionSettings, ConversionCategory, ConversionFormat } from '../types';
+import { CATEGORIES, FORMAT_MAP, RESOLUTIONS, QUALITIES } from '../constants';
 import { 
   Film, 
   Music, 
-  Image as ImageIcon, 
-  Zap, 
-  ChevronRight, 
-  X,
-  FileText,
-  Settings,
-  ShieldCheck
+  ImageIcon, 
+  Sparkles, 
+  ArrowRight, 
+  X, 
+  ArrowLeft,
+  ChevronRight,
+  Zap,
+  LayoutGrid
 } from 'lucide-react';
 
 interface SelectionViewProps {
@@ -20,33 +21,62 @@ interface SelectionViewProps {
   credits: number;
 }
 
-export const SelectionView: React.FC<SelectionViewProps> = ({ files, onCancel, onProcess, credits }) => {
-  const [selectedFormat, setSelectedFormat] = useState<ConversionFormat | null>(null);
+const IconMap: Record<string, any> = {
+  Film,
+  Music,
+  ImageIcon,
+  Sparkles
+};
 
-  const isAI = selectedFormat === 'txt' || selectedFormat === 'srt';
+export const SelectionView: React.FC<SelectionViewProps> = ({ files, onCancel, onProcess, credits }) => {
+  const [category, setCategory] = useState<ConversionCategory | null>(null);
+  const [format, setFormat] = useState<ConversionFormat | null>(null);
+  const [resolution, setResolution] = useState<'720p' | '1080p' | '4K'>('1080p');
+  const [quality, setQuality] = useState<'Small File' | 'Balanced' | 'High Quality'>('Balanced');
+
+  // Logic to determine if we can proceed
+  const canConvert = !!category && !!format;
+  const isAI = category === 'other';
   const totalCost = (isAI ? 5 : 1) * files.length;
   const canAfford = credits >= totalCost;
 
-  const getFormatIcon = (formatId: string) => {
-    const opt = TARGET_OPTIONS.find(o => o.id === formatId);
-    if (!opt) return <FileText className="w-4 h-4" />;
-    switch (opt.category) {
-      case 'Video': return <Film className="w-4 h-4" />;
-      case 'Audio': return <Music className="w-4 h-4" />;
-      case 'Image': return <ImageIcon className="w-4 h-4" />;
-      default: return <Zap className="w-4 h-4" />;
-    }
+  // Dynamic Summary Text
+  const summaryText = useMemo(() => {
+    if (!category || !format) return "Select format to begin";
+    let text = `${format.toUpperCase()}`;
+    if (category === 'video') text += ` @ ${resolution} (${quality})`;
+    return `Target: ${text}`;
+  }, [category, format, resolution, quality]);
+
+  const handleCategorySelect = (cat: ConversionCategory) => {
+    setCategory(cat);
+    // Auto-select first format in that category
+    setFormat(FORMAT_MAP[cat][0].id);
   };
 
-  const categories = Array.from(new Set(TARGET_OPTIONS.map(opt => opt.category)));
-
   return (
-    <div className="safe-scroll-container slide-up">
-      {/* Small Header */}
-      <header className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-slate-800/20">
-        <div className="flex flex-col">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Choose Format</span>
-          <span className="text-sm font-bold text-white">{files.length} file{files.length > 1 ? 's' : ''} ready</span>
+    <div className="safe-scroll-container slide-up flex flex-col h-full bg-slate-900/10">
+      {/* Header */}
+      <header className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-slate-800/20 shrink-0">
+        <div className="flex items-center gap-3">
+          {category ? (
+            <button 
+              onClick={() => setCategory(null)}
+              className="p-2 -ml-2 hover:bg-white/5 rounded-lg text-slate-400 hover:text-white transition-all"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+          ) : (
+            <div className="w-8 h-8 flex items-center justify-center bg-blue-500/10 rounded-lg">
+              <LayoutGrid className="w-4 h-4 text-blue-500" />
+            </div>
+          )}
+          <div className="flex flex-col">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+              {category ? 'Configure' : 'Choose Category'}
+            </span>
+            <span className="text-sm font-bold text-white">{files.length} file{files.length > 1 ? 's' : ''}</span>
+          </div>
         </div>
         <button 
           onClick={onCancel} 
@@ -56,69 +86,144 @@ export const SelectionView: React.FC<SelectionViewProps> = ({ files, onCancel, o
         </button>
       </header>
 
-      {/* Internal Grid - Safe Scrolling */}
-      <div className="scrollable-grid px-6 pt-6 custom-scrollbar">
-        <div className="space-y-10">
-          {categories.map((cat) => (
-            <section key={cat} className="space-y-3">
-              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">
-                {cat}
-              </h4>
-              <div className="grid grid-cols-1 gap-2">
-                {TARGET_OPTIONS.filter(o => o.category === cat).map((opt) => (
+      {/* Main Content Area - Scrollable */}
+      <div className="scrollable-grid px-6 py-6 custom-scrollbar flex-1 overflow-y-auto">
+        {!category ? (
+          /* 2x2 Category Grid */
+          <div className="grid grid-cols-2 gap-4 h-full content-center py-4">
+            {CATEGORIES.map((cat) => {
+              const Icon = IconMap[cat.icon];
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => handleCategorySelect(cat.id)}
+                  className="group flex flex-col items-center justify-center p-6 rounded-[24px] border border-white/5 bg-white/[0.02] hover:bg-white/[0.06] hover:border-blue-500/50 transition-all aspect-square"
+                >
+                  <div className="w-14 h-14 rounded-2xl bg-slate-800 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-blue-600/20 transition-all">
+                    <Icon className="w-8 h-8 text-slate-400 group-hover:text-blue-500" />
+                  </div>
+                  <span className="text-sm font-bold text-slate-200">{cat.label}</span>
+                  <span className="text-[10px] text-slate-500 font-medium mt-1">{cat.description}</span>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          /* Sub-Menu Config Options */
+          <div className="space-y-8 pb-12">
+            {/* Format Selection */}
+            <div className="space-y-3">
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] ml-1">Format</label>
+              <div className="flex flex-wrap gap-2">
+                {FORMAT_MAP[category].map((f) => (
                   <button
-                    key={opt.id}
-                    onClick={() => setSelectedFormat(opt.id as ConversionFormat)}
-                    className={`
-                      relative p-4 flex items-center gap-4 rounded-xl border transition-all text-left group
-                      ${selectedFormat === opt.id 
-                        ? 'border-blue-500 bg-blue-500/10 text-white' 
-                        : 'border-white/5 bg-white/[0.02] text-slate-400 hover:border-white/10'}
-                    `}
+                    key={f.id}
+                    onClick={() => setFormat(f.id)}
+                    className={`px-4 py-2 rounded-xl border text-xs font-bold transition-all ${
+                      format === f.id 
+                        ? 'bg-blue-600 border-blue-400 text-white' 
+                        : 'bg-white/5 border-white/5 text-slate-400 hover:border-white/10'
+                    }`}
                   >
-                    <div className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-lg ${selectedFormat === opt.id ? 'bg-blue-500/20 text-blue-400' : 'bg-slate-800 text-slate-600'}`}>
-                      {getFormatIcon(opt.id)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-sm font-bold block text-slate-200">{opt.label}</span>
-                      <p className="text-[11px] font-medium text-slate-500 truncate">
-                        {opt.description}
-                      </p>
-                    </div>
-                    {selectedFormat === opt.id && (
-                      <ShieldCheck className="w-5 h-5 text-blue-500" />
-                    )}
+                    {f.label}
                   </button>
                 ))}
               </div>
-            </section>
-          ))}
-        </div>
+            </div>
+
+            {/* Video Specific Toggles */}
+            {category === 'video' && (
+              <>
+                <div className="space-y-3">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] ml-1">Resolution</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {RESOLUTIONS.map((res) => (
+                      <button
+                        key={res}
+                        onClick={() => setResolution(res)}
+                        className={`py-2 rounded-xl border text-[10px] font-black tracking-widest transition-all ${
+                          resolution === res 
+                            ? 'bg-blue-600 border-blue-400 text-white' 
+                            : 'bg-white/5 border-white/5 text-slate-500 hover:border-white/10'
+                        }`}
+                      >
+                        {res}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] ml-1">Quality</label>
+                  <div className="grid grid-cols-1 gap-2">
+                    {QUALITIES.map((q) => (
+                      <button
+                        key={q}
+                        onClick={() => setQuality(q)}
+                        className={`flex items-center justify-between px-4 py-3 rounded-xl border text-[11px] font-bold transition-all ${
+                          quality === q 
+                            ? 'bg-blue-600/20 border-blue-500/50 text-blue-400' 
+                            : 'bg-white/5 border-white/5 text-slate-500 hover:border-white/10'
+                        }`}
+                      >
+                        <span>{q}</span>
+                        {quality === q && <ChevronRight className="w-3 h-3" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Info Note */}
+            <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/10 flex gap-3">
+              <Zap className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
+              <p className="text-[11px] leading-relaxed text-slate-400">
+                Processed locally in your browser. Higher quality settings may take more time and battery.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Action Footer - Always visible */}
-      <div className="p-6 border-t border-white/5 bg-slate-900/60 backdrop-blur-md">
-        <div className="flex flex-col gap-4">
-          <div className="flex justify-between items-center text-xs font-bold px-1">
-             <span className="text-slate-500">Total Cost</span>
-             <span className={`flex items-center gap-2 ${canAfford ? 'text-blue-400' : 'text-rose-400'}`}>
-               <Zap className="w-3 h-3" /> {totalCost} points
+      {/* Action Footer - Pinned to Bottom */}
+      <div className="p-6 border-t border-white/5 bg-slate-900/90 backdrop-blur-xl shrink-0 z-50">
+        <div className="flex flex-col gap-3">
+          {/* Dynamic Preview Label */}
+          <div className="flex justify-between items-center px-1">
+             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+               {summaryText}
+             </span>
+             <span className={`text-[10px] font-bold flex items-center gap-1.5 ${canAfford ? 'text-blue-400' : 'text-rose-400'}`}>
+               <Zap className="w-3 h-3" /> {totalCost} pts
              </span>
           </div>
 
           <button
-            disabled={!selectedFormat || !canAfford}
-            onClick={() => selectedFormat && onProcess({ targetFormat: selectedFormat, isTranscription: isAI })}
+            disabled={!canConvert || !canAfford}
+            onClick={() => category && format && onProcess({ 
+              category, 
+              targetFormat: format, 
+              resolution, 
+              quality,
+              isTranscription: isAI 
+            })}
             className={`
-              w-full btn-target rounded-xl transition-all shadow-lg
-              ${!selectedFormat 
-                ? 'bg-white/5 text-slate-600 cursor-not-allowed' 
+              w-full h-[54px] rounded-2xl flex items-center justify-center gap-3 text-sm font-black uppercase tracking-[0.2em] transition-all shadow-xl
+              ${!canConvert 
+                ? 'bg-white/5 text-slate-600 cursor-not-allowed border border-white/5' 
                 : canAfford 
-                  ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/20' 
+                  ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/40 active:scale-[0.97] border border-blue-400/30' 
                   : 'bg-rose-500/10 text-rose-500 border border-rose-500/20 cursor-not-allowed'}
             `}
           >
-            {!selectedFormat ? 'Choose a format' : canAfford ? 'Convert Now' : 'Not enough points'}
+            {canAfford ? (
+              <>
+                Convert <ArrowRight className="w-5 h-5" />
+              </>
+            ) : (
+              'Not enough points'
+            )}
           </button>
         </div>
       </div>

@@ -1,4 +1,3 @@
-
 export enum AppState {
   IDLE = 'IDLE',
   SELECTION = 'SELECTION',
@@ -15,11 +14,16 @@ export interface FileMetadata {
   blob: Blob;
 }
 
-export type ConversionFormat = 'mp4' | 'webm' | 'mp3' | 'wav' | 'txt' | 'srt';
+export type ConversionCategory = 'video' | 'audio' | 'image' | 'other';
+
+export type ConversionFormat = 'mp4' | 'webm' | 'mp3' | 'wav' | 'txt' | 'srt' | 'webp' | 'png' | 'jpg';
 
 export interface ConversionSettings {
+  category: ConversionCategory;
   targetFormat: ConversionFormat;
-  isTranscription: boolean;
+  resolution?: '720p' | '1080p' | '4K';
+  quality?: 'Small File' | 'Balanced' | 'High Quality';
+  isTranscription?: boolean;
 }
 
 export interface ProcessingProgress {
